@@ -37,14 +37,22 @@
           // Kintone APIを使用してファイル内容を取得
           kintone.api(kintone.api.url('/k/v1/file', true), 'GET', {
             fileKey: file.fileKey
-          }).then(function(response) {
-            // バイナリデータからテキストを抽出
-            try {
-              const text = response; // 実際の実装では適切な変換が必要
-              resolve(text);
-            } catch (error) {
-              reject(new Error('テキスト抽出に失敗しました'));
-            }
+          }).then(function(fileBlob) {
+            // Blobからテキストを読み取り
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const text = e.target.result;
+              resolve({
+                isText: true,
+                text: text,
+                fileName: file.name,
+                fileType: fileType
+              });
+            };
+            reader.onerror = function() {
+              reject(new Error('ファイル読み取りに失敗しました'));
+            };
+            reader.readAsText(fileBlob);
           }).catch(function(error) {
             reject(error);
           });

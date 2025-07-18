@@ -28,27 +28,57 @@ jQuery.noConflict();
 
   function checkFileField(fieldCode, files, fieldLabel, $resultsContainer) {
     if (!files || files.length === 0) {
-      return;
+      return Promise.resolve();
     }
 
-    files.forEach(function(file) {
+    const filePromises = files.map(function(file) {
       if (FileProcessor.isSupported(file.contentType)) {
-        const fileTypeName = FileProcessor.getFileTypeName(file.contentType);
-        const $fileInfo = $('<div class="word-collector-file-info"></div>');
-        
-        if (file.contentType === 'text/plain') {
-          // テキストファイルの場合は実際にチェック可能
-          $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + ' (' + fileTypeName + ')' +
-                        '<br><span class="word-collector-file-note">テキストファイルのチェック機能は開発中です。</span>');
-        } else {
-          // PDF/DOCXの場合は情報表示のみ
-          $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + ' (' + fileTypeName + ')' +
-                        '<br><span class="word-collector-file-note">このファイル形式は内容確認が必要です。必要に応じて修正・再アップロードしてください。</span>');
-        }
-        
-        $resultsContainer.append($fileInfo);
+        return FileProcessor.extractText(file).then(function(result) {
+          const fileTypeName = FileProcessor.getFileTypeName(file.contentType);
+          const $fileInfo = $('<div class="word-collector-file-info"></div>');
+          
+          if (result.isText) {
+            // テキストファイルの場合は実際にチェック
+            const issues = checkWords(result.text);
+            if (issues.length > 0) {
+              $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + ' (' + fileTypeName + ')' +
+                            '<br><span class="word-collector-file-note">' + issues.length + '件の表記修正候補が見つかりました。</span>');
+              
+              // 問題のある箇所をリスト表示
+              const $issuesList = $('<ul class="word-collector-list"></ul>');
+              issues.forEach(function(issue) {
+                const $item = $('<li></li>');
+                $item.html('"<span class="word-collector-incorrect">' + issue.word + 
+                          '</span>" → "<span class="word-collector-suggestion">' + 
+                          issue.suggestion + '</span>"');
+                $issuesList.append($item);
+              });
+              $fileInfo.append($issuesList);
+            } else {
+              $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + ' (' + fileTypeName + ')' +
+                            '<br><span class="word-collector-file-note">問題は見つかりませんでした。</span>');
+            }
+          } else {
+            // PDF/DOCXの場合は情報表示のみ
+            $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + ' (' + fileTypeName + ')' +
+                          '<br><span class="word-collector-file-note">このファイル形式は内容確認が必要です。必要に応じて修正・再アップロードしてください。</span>');
+          }
+          
+          $resultsContainer.append($fileInfo);
+          return result;
+        }).catch(function(error) {
+          const $fileInfo = $('<div class="word-collector-file-info"></div>');
+          $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + 
+                        '<br><span class="word-collector-file-note">ファイルの読み取りに失敗しました: ' + error.message + '</span>');
+          $resultsContainer.append($fileInfo);
+          return null;
+        });
+      } else {
+        return Promise.resolve(null);
       }
     });
+
+    return Promise.all(filePromises);
   }
 
   function createIssueElement(fieldLabel, issues) {
@@ -83,14 +113,14 @@ jQuery.noConflict();
     const $resultsContainer = $('<div id="word-collector-results"></div>');
     let totalIssues = 0;
     
-    targetFields.forEach(function(fieldCode) {
+    const fieldPromises = targetFields.map(function(fieldCode) {
       if (record[fieldCode] && record[fieldCode].value) {
         const fieldValue = record[fieldCode].value;
         const fieldLabel = kintone.app.getFieldElements(fieldCode)[0]?.innerText || fieldCode;
         
         // ファイルフィールドの場合
         if (Array.isArray(fieldValue)) {
-          checkFileField(fieldCode, fieldValue, fieldLabel, $resultsContainer);
+          return checkFileField(fieldCode, fieldValue, fieldLabel, $resultsContainer);
         } else {
           // テキストフィールドの場合
           const issues = checkWords(fieldValue);
@@ -98,25 +128,28 @@ jQuery.noConflict();
             totalIssues += issues.length;
             $resultsContainer.append(createIssueElement(fieldLabel, issues));
           }
+          return Promise.resolve();
         }
       }
+      return Promise.resolve();
     });
     
-    const existingResults = document.getElementById('word-collector-results');
-    if (existingResults) {
-      existingResults.remove();
-    }
-    
-    if (totalIssues > 0) {
-      const $summary = $('<div class="word-collector-summary"></div>');
-      $summary.html('合計 <strong>' + totalIssues + '</strong> 件の表記修正候補が見つかりました。');
-      $resultsContainer.prepend($summary);
-      
-      const headerSpace = kintone.app.record.getHeaderMenuSpaceElement();
-      if (headerSpace) {
-        $(headerSpace).append($resultsContainer);
+    Promise.all(fieldPromises).then(function() {
+      const existingResults = document.getElementById('word-collector-results');
+      if (existingResults) {
+        existingResults.remove();
       }
-    }
+      
+      // ファイルの問題も含めて結果を表示
+      if ($resultsContainer.children().length > 0) {
+        const headerSpace = kintone.app.record.getHeaderMenuSpaceElement();
+        if (headerSpace) {
+          $(headerSpace).append($resultsContainer);
+        }
+      }
+    }).catch(function(error) {
+      console.error('ファイルチェック中にエラーが発生しました:', error);
+    });
   }
 
   kintone.events.on([
