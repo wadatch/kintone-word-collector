@@ -2,44 +2,14 @@ name: Release Plugin
 
 on:
   push:
-    branches: [ main ]
-    # Only trigger on merge commits from pull requests
-    paths-ignore:
-      - '.github/**'
-      - 'README.md'
-      - 'LICENSE'
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
-  check-merge-commit:
-    runs-on: ubuntu-latest
-    outputs:
-      is-merge: ${{ steps.check.outputs.is-merge }}
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
-    
-    - name: Check if this is a merge commit
-      id: check
-      run: |
-        # Check if this commit has more than one parent (merge commit)
-        if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
-          parents=$(git cat-file -p HEAD | grep "^parent " | wc -l)
-          if [ $parents -gt 1 ]; then
-            echo "is-merge=true" >> $GITHUB_OUTPUT
-            echo "This is a merge commit"
-          else
-            echo "is-merge=false" >> $GITHUB_OUTPUT
-            echo "This is not a merge commit"
-          fi
-        else
-          echo "is-merge=false" >> $GITHUB_OUTPUT
-          echo "This is the first commit"
-        fi
-
   release:
-    needs: check-merge-commit
-    if: needs.check-merge-commit.outputs.is-merge == 'true'
     runs-on: ubuntu-latest
     
     steps:
@@ -66,19 +36,22 @@ jobs:
     - name: Rename plugin file
       run: mv plugin.zip kintone-word-collector.zip
     
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ github.run_number }}
-        name: Release v${{ github.run_number }}
+        name: Release v${{ steps.get_version.outputs.VERSION }}
         body: |
-          ## Kintone Word Collector Plugin
+          ## Kintone Word Collector Plugin v${{ steps.get_version.outputs.VERSION }}
           
           日本語文章の表記ゆれや不適切な表現をチェック・修正提案するKintoneプラグインです。
           
           ### 機能
           - 67個の表記ゆれチェック
-          - 保存時の自動置換ダイアログ
+          - 保存時の自動置換ダイアログ  
           - フィールド選択可能な設定画面
           
           ### インストール方法
@@ -87,7 +60,7 @@ jobs:
           3. アプリにプラグインを追加して設定
           
           ### 変更内容
-          ${{ github.event.head_commit.message }}
+          Built from commit: ${{ github.sha }}
           
           ---
           Copyright (c) 2025 wadatch
