@@ -26,6 +26,31 @@ jQuery.noConflict();
     return issues.sort((a, b) => a.position - b.position);
   }
 
+  function checkFileField(fieldCode, files, fieldLabel, $resultsContainer) {
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    files.forEach(function(file) {
+      if (FileProcessor.isSupported(file.contentType)) {
+        const fileTypeName = FileProcessor.getFileTypeName(file.contentType);
+        const $fileInfo = $('<div class="word-collector-file-info"></div>');
+        
+        if (file.contentType === 'text/plain') {
+          // テキストファイルの場合は実際にチェック可能
+          $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + ' (' + fileTypeName + ')' +
+                        '<br><span class="word-collector-file-note">テキストファイルのチェック機能は開発中です。</span>');
+        } else {
+          // PDF/DOCXの場合は情報表示のみ
+          $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + ' (' + fileTypeName + ')' +
+                        '<br><span class="word-collector-file-note">このファイル形式は内容確認が必要です。必要に応じて修正・再アップロードしてください。</span>');
+        }
+        
+        $resultsContainer.append($fileInfo);
+      }
+    });
+  }
+
   function createIssueElement(fieldLabel, issues) {
     const $container = $('<div class="word-collector-issues"></div>');
     
@@ -61,12 +86,18 @@ jQuery.noConflict();
     targetFields.forEach(function(fieldCode) {
       if (record[fieldCode] && record[fieldCode].value) {
         const fieldValue = record[fieldCode].value;
-        const issues = checkWords(fieldValue);
+        const fieldLabel = kintone.app.getFieldElements(fieldCode)[0]?.innerText || fieldCode;
         
-        if (issues.length > 0) {
-          totalIssues += issues.length;
-          const fieldLabel = kintone.app.getFieldElements(fieldCode)[0]?.innerText || fieldCode;
-          $resultsContainer.append(createIssueElement(fieldLabel, issues));
+        // ファイルフィールドの場合
+        if (Array.isArray(fieldValue)) {
+          checkFileField(fieldCode, fieldValue, fieldLabel, $resultsContainer);
+        } else {
+          // テキストフィールドの場合
+          const issues = checkWords(fieldValue);
+          if (issues.length > 0) {
+            totalIssues += issues.length;
+            $resultsContainer.append(createIssueElement(fieldLabel, issues));
+          }
         }
       }
     });
@@ -163,6 +194,52 @@ jQuery.noConflict();
     });
   }
 
+  function showFileDialog(filesByField) {
+    return new Promise(function(resolve) {
+      const $dialog = $('<div class="word-collector-dialog"></div>');
+      const $overlay = $('<div class="word-collector-overlay"></div>');
+      
+      const $dialogContent = $('<div class="word-collector-dialog-content"></div>');
+      $dialogContent.append('<h2>ファイルが検出されました</h2>');
+      
+      $dialogContent.append('<p>以下のファイルが見つかりました。内容を確認し、必要に応じて修正・再アップロードしてください。</p>');
+      
+      Object.keys(filesByField).forEach(function(fieldCode) {
+        const fieldInfo = filesByField[fieldCode];
+        const $fieldSection = $('<div class="word-collector-field-section"></div>');
+        $fieldSection.append('<h3>' + fieldInfo.label + '</h3>');
+        
+        const $filesList = $('<ul class="word-collector-dialog-list"></ul>');
+        fieldInfo.files.forEach(function(file) {
+          const $item = $('<li></li>');
+          const fileTypeName = FileProcessor.getFileTypeName(file.contentType);
+          $item.html('<strong>' + file.name + '</strong> (' + fileTypeName + ')' +
+                    '<br><span class="word-collector-file-note">このファイル形式は内容確認が必要です。</span>');
+          $filesList.append($item);
+        });
+        
+        $fieldSection.append($filesList);
+        $dialogContent.append($fieldSection);
+      });
+      
+      const $buttons = $('<div class="word-collector-dialog-buttons"></div>');
+      
+      const $okButton = $('<button class="word-collector-button-ok">OK</button>');
+      $okButton.on('click', function() {
+        $dialog.remove();
+        $overlay.remove();
+        resolve(true);
+      });
+      
+      $buttons.append($okButton);
+      $dialogContent.append($buttons);
+      
+      $dialog.append($dialogContent);
+      $('body').append($overlay);
+      $('body').append($dialog);
+    });
+  }
+
   function replaceWords(text, issues) {
     let replacedText = text;
     
@@ -189,25 +266,65 @@ jQuery.noConflict();
     
     const targetFields = JSON.parse(CONFIG.fields);
     const issuesByField = {};
+    const filesByField = {};
     let hasIssues = false;
+    let hasFiles = false;
     
     targetFields.forEach(function(fieldCode) {
       if (event.record[fieldCode] && event.record[fieldCode].value) {
         const fieldValue = event.record[fieldCode].value;
-        const issues = checkWords(fieldValue);
+        const fieldLabel = $('[data-field-code="' + fieldCode + '"]').find('.field-name').text() || fieldCode;
         
-        if (issues.length > 0) {
-          hasIssues = true;
-          const fieldLabel = $('[data-field-code="' + fieldCode + '"]').find('.field-name').text() || fieldCode;
-          issuesByField[fieldCode] = {
-            label: fieldLabel,
-            issues: issues,
-            value: fieldValue
-          };
+        // ファイルフィールドの場合
+        if (Array.isArray(fieldValue)) {
+          const supportedFiles = fieldValue.filter(function(file) {
+            return FileProcessor.isSupported(file.contentType);
+          });
+          
+          if (supportedFiles.length > 0) {
+            hasFiles = true;
+            filesByField[fieldCode] = {
+              label: fieldLabel,
+              files: supportedFiles
+            };
+          }
+        } else {
+          // テキストフィールドの場合
+          const issues = checkWords(fieldValue);
+          
+          if (issues.length > 0) {
+            hasIssues = true;
+            issuesByField[fieldCode] = {
+              label: fieldLabel,
+              issues: issues,
+              value: fieldValue
+            };
+          }
         }
       }
     });
     
+    // ファイルがある場合は先にファイルダイアログを表示
+    if (hasFiles) {
+      return showFileDialog(filesByField).then(function() {
+        // ファイルダイアログの後、テキストの問題がある場合は置換ダイアログを表示
+        if (hasIssues) {
+          return showReplaceDialog(issuesByField).then(function(shouldReplace) {
+            if (shouldReplace) {
+              Object.keys(issuesByField).forEach(function(fieldCode) {
+                const fieldInfo = issuesByField[fieldCode];
+                const replacedText = replaceWords(fieldInfo.value, fieldInfo.issues);
+                event.record[fieldCode].value = replacedText;
+              });
+            }
+            return event;
+          });
+        }
+        return event;
+      });
+    }
+    
+    // テキストの問題のみある場合
     if (hasIssues) {
       return showReplaceDialog(issuesByField).then(function(shouldReplace) {
         if (shouldReplace) {

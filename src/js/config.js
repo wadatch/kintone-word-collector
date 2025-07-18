@@ -21,7 +21,7 @@ jQuery.noConflict();
       
       const properties = resp.properties;
       const textFields = properties.filter(function(field) {
-        return ['SINGLE_LINE_TEXT', 'MULTI_LINE_TEXT', 'RICH_TEXT'].indexOf(field.type) >= 0;
+        return ['SINGLE_LINE_TEXT', 'MULTI_LINE_TEXT', 'RICH_TEXT', 'FILE'].indexOf(field.type) >= 0;
       });
       
       textFields.forEach(function(field) {
