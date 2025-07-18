@@ -30,5 +30,9 @@
     "ja": "指定したフィールドの日本語文章をチェックし、不適切な表現や表記ゆれを検出・修正提案します",
     "en": "Checks Japanese text in specified fields and suggests corrections for inappropriate expressions"
   },
+  "homepage_url": {
+    "ja": "https://github.com/wadatch/kintone-word-collector",
+    "en": "https://github.com/wadatch/kintone-word-collector"
+  },
   "icon": "image/icon.png"
 }
