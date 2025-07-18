@@ -1,0 +1,21 @@
+{
+  "name": "word-collector",
+  "version": "1.0.0",
+  "description": "Kintone plugin to check and suggest corrections for Japanese text",
+  "scripts": {
+    "package": "kintone-plugin-packer src --ppk ienmacjkmpbhkikakmnieiekgemiloaj.ppk",
+    "upload": "kintone-plugin-uploader plugin.zip --watch --waiting-dialog-ms 3000"
+  },
+  "keywords": [
+    "kintone",
+    "plugin",
+    "japanese",
+    "text-checker"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@kintone/plugin-packer": "^8.0.0",
+    "@kintone/plugin-uploader": "^9.1.0"
+  }
+}

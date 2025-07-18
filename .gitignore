@@ -1,0 +1,6 @@
+node_modules/
+*.zip
+plugin/
+.env
+.DS_Store
+*.ppk

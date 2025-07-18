@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>文言チェッカー設定</title>
+</head>
+<body>
+  <div class="kintoneplugin-outer">
+    <form class="js-submit-settings">
+      <div class="kintoneplugin-row">
+        <label class="kintoneplugin-label" for="select-fields">
+          <span class="kintoneplugin-require">*</span>チェック対象フィールド
+        </label>
+        <div class="kintoneplugin-input-outer">
+          <div class="kintoneplugin-select-outer">
+            <div class="kintoneplugin-select">
+              <select id="select-fields" name="fields" multiple size="10" required>
+                <option value="">フィールドを選択してください</option>
+              </select>
+            </div>
+          </div>
+          <div class="kintoneplugin-desc">
+            チェック対象とする文字列フィールドを選択してください（複数選択可）
+          </div>
+        </div>
+      </div>
+      
+      <div class="kintoneplugin-row">
+        <label class="kintoneplugin-label">
+          チェック項目数
+        </label>
+        <div class="kintoneplugin-input-outer">
+          <div class="kintoneplugin-desc">
+            67個の表記ゆれ・不適切表現をチェックします
+          </div>
+        </div>
+      </div>
+      
+      <div class="kintoneplugin-row">
+        <button type="submit" class="kintoneplugin-button-dialog-ok">保存</button>
+        <button type="button" class="kintoneplugin-button-dialog-cancel" id="cancel-button">キャンセル</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>
