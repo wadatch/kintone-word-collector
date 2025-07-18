@@ -12,7 +12,7 @@
     "japanese",
     "text-checker"
   ],
-  "author": "",
+  "author": "wadatch",
   "license": "MIT",
   "devDependencies": {
     "@kintone/plugin-packer": "^8.0.0",
