@@ -11,10 +11,11 @@
 - **保存時の自動置換ダイアログ**: レコード保存時に問題を検出し、修正を提案
 - **フィールド選択可能な設定画面**: チェック対象のフィールドを自由に選択
 - **リアルタイム表示**: 編集中にも問題箇所をハイライト表示
+- **ファイル添付フィールド対応**: PDF・DOCXファイルの文字列チェック機能
 
 ## インストール方法
 
-1. [Releases](https://github.com/wadatch/kintone-word-collector/releases) から最新の `kintone-word-collector.zip` をダウンロード
+1. [Releases](https://github.com/wadatch/kintone-word-collector/releases) から最新の `plugin.zip` をダウンロード
 2. Kintone管理画面でプラグインをアップロード
 3. アプリにプラグインを追加
 4. プラグイン設定でチェック対象フィールドを選択
@@ -40,9 +41,30 @@ npm install
 npm run package
 ```
 
+生成されるファイル: `plugin.zip`
+
 ### 秘密鍵の管理
 
 プラグインのビルドには秘密鍵が必要です。GitHub Actionsでは `PLUGIN_PRIVATE_KEY` として設定してください。
+開発環境では `ienmacjkmpbhkikakmnieiekgemiloaj.ppk` を使用します。
+
+## 対応機能
+
+### チェック対象フィールド
+
+- 文字列（1行）
+- 文字列（複数行）
+- リッチエディター
+- ファイル添付フィールド（PDF、DOCX）
+
+### ファイル添付フィールドの対応
+
+プラグインはファイル添付フィールドの以下の形式をサポートします：
+
+- **PDF**: `application/pdf`
+- **DOCX**: `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+
+ファイル内のテキストを抽出して文言チェックを行います。
 
 ## 正誤対照表
 
@@ -144,6 +166,48 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## 技術仕様
+
+### プラグインの構成
+
+```
+src/
+├── manifest.json          # プラグインの設定
+├── css/
+│   └── style.css          # プラグイン用のスタイル
+├── js/
+│   ├── desktop.js         # メイン処理
+│   ├── config.js          # 設定画面
+│   ├── file-processor.js  # ファイル処理（PDF/DOCX）
+│   └── correction-table.js # 正誤対照表（自動生成）
+├── html/
+│   └── config.html        # 設定画面のHTML
+├── data/
+│   └── correction-table.csv # 正誤対照表のデータ
+└── image/
+    └── icon.png           # プラグインアイコン
+```
+
+### 使用ライブラリ
+
+- jQuery 3.6.0
+- Kintone JavaScript API
+- @kintone/plugin-packer（ビルド用）
+- @kintone/plugin-uploader（開発用）
+
+### 開発コマンド
+
+```bash
+# 正誤対照表の自動生成
+npm run generate-table
+
+# プラグインのビルド（正誤対照表の生成も含む）
+npm run package
+
+# プラグインのアップロード（開発用）
+npm run upload
+```
 
 ## 貢献
 
