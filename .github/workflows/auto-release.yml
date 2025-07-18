@@ -1,0 +1,108 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '.github/**'
+      - 'README.md'
+      - 'LICENSE'
+      - 'CLAUDE.md'
+
+permissions:
+  contents: write
+
+jobs:
+  auto-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Get latest tag
+      id: get_latest_tag
+      run: |
+        # Get the latest tag, or use v0.0.0 if no tags exist
+        latest_tag=$(git tag -l "v*" | sort -V | tail -n 1)
+        if [ -z "$latest_tag" ]; then
+          latest_tag="v0.0.0"
+        fi
+        echo "LATEST_TAG=$latest_tag" >> $GITHUB_OUTPUT
+        echo "Latest tag: $latest_tag"
+
+    - name: Increment version
+      id: increment_version
+      run: |
+        latest_tag="${{ steps.get_latest_tag.outputs.LATEST_TAG }}"
+        # Remove 'v' prefix and split version
+        version=${latest_tag#v}
+        IFS='.' read -r major minor patch <<< "$version"
+        
+        # Increment patch version
+        new_patch=$((patch + 1))
+        new_version="v$major.$minor.$new_patch"
+        
+        echo "NEW_VERSION=$new_version" >> $GITHUB_OUTPUT
+        echo "New version: $new_version"
+
+    - name: Create and push tag
+      run: |
+        new_version="${{ steps.increment_version.outputs.NEW_VERSION }}"
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -a "$new_version" -m "Release $new_version"
+        git push origin "$new_version"
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Create PPK file from secret
+      run: echo "${{ secrets.PLUGIN_PRIVATE_KEY }}" > ienmacjkmpbhkikakmnieiekgemiloaj.ppk
+
+    - name: Build plugin
+      run: npm run package
+
+    - name: Rename plugin file
+      run: mv plugin.zip kintone-word-collector.zip
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.increment_version.outputs.NEW_VERSION }}
+        name: Release ${{ steps.increment_version.outputs.NEW_VERSION }}
+        body: |
+          ## Kintone Word Collector Plugin ${{ steps.increment_version.outputs.NEW_VERSION }}
+          
+          日本語文章の表記ゆれや不適切な表現をチェック・修正提案するKintoneプラグインです。
+          
+          ### 機能
+          - 67個の表記ゆれチェック
+          - 保存時の自動置換ダイアログ
+          - フィールド選択可能な設定画面
+          
+          ### インストール方法
+          1. `kintone-word-collector.zip` をダウンロード
+          2. Kintone管理画面でプラグインをアップロード
+          3. アプリにプラグインを追加して設定
+          
+          ### 変更内容
+          Built from commit: ${{ github.sha }}
+          
+          ---
+          Copyright (c) 2025 wadatch
+          Licensed under the MIT License
+        files: kintone-word-collector.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
