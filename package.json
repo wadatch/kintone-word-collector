@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "Kintone plugin to check and suggest corrections for Japanese text",
   "scripts": {
+    "generate-table": "node scripts/generate-correction-table.js",
+    "prebuild": "npm run generate-table",
     "package": "kintone-plugin-packer src --ppk ienmacjkmpbhkikakmnieiekgemiloaj.ppk",
     "upload": "kintone-plugin-uploader plugin.zip --watch --waiting-dialog-ms 3000"
   },
