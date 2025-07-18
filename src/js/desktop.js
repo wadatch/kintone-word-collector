@@ -231,7 +231,15 @@ jQuery.noConflict();
         resolve(true);
       });
       
+      const $cancelButton = $('<button class="word-collector-button-cancel">キャンセル</button>');
+      $cancelButton.on('click', function() {
+        $dialog.remove();
+        $overlay.remove();
+        resolve(false);
+      });
+      
       $buttons.append($okButton);
+      $buttons.append($cancelButton);
       $dialogContent.append($buttons);
       
       $dialog.append($dialogContent);
@@ -306,7 +314,12 @@ jQuery.noConflict();
     
     // ファイルがある場合は先にファイルダイアログを表示
     if (hasFiles) {
-      return showFileDialog(filesByField).then(function() {
+      return showFileDialog(filesByField).then(function(shouldContinue) {
+        if (!shouldContinue) {
+          // キャンセルされた場合は保存を中止
+          return Promise.reject(new Error('保存がキャンセルされました'));
+        }
+        
         // ファイルダイアログの後、テキストの問題がある場合は置換ダイアログを表示
         if (hasIssues) {
           return showReplaceDialog(issuesByField).then(function(shouldReplace) {
