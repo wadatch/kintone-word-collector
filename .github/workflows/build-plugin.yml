@@ -1,10 +1,9 @@
 name: Build Kintone Plugin
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
+    types: [opened, synchronize, reopened]
 
 jobs:
   build:
@@ -37,36 +36,6 @@ jobs:
     - name: Upload plugin artifact
       uses: actions/upload-artifact@v4
       with:
-        name: kintone-word-collector-plugin
+        name: kintone-word-collector-plugin-pr-${{ github.event.number }}
         path: kintone-word-collector.zip
-        retention-days: 30
-    
-    - name: Create Release on main branch
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v${{ github.run_number }}
-        name: Release v${{ github.run_number }}
-        body: |
-          ## Kintone Word Collector Plugin
-          
-          日本語文章の表記ゆれや不適切な表現をチェック・修正提案するKintoneプラグインです。
-          
-          ### 機能
-          - 67個の表記ゆれチェック
-          - 保存時の自動置換ダイアログ
-          - フィールド選択可能な設定画面
-          
-          ### インストール方法
-          1. `kintone-word-collector.zip` をダウンロード
-          2. Kintone管理画面でプラグインをアップロード
-          3. アプリにプラグインを追加して設定
-          
-          ---
-          Copyright (c) 2025 wadatch
-          Licensed under the MIT License
-        files: kintone-word-collector.zip
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        retention-days: 7
