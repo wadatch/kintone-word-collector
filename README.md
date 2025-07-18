@@ -15,7 +15,7 @@
 
 ## インストール方法
 
-1. [Releases](https://github.com/wadatch/kintone-word-collector/releases) から最新の `plugin.zip` をダウンロード
+1. [Releases](https://github.com/wadatch/kintone-word-collector/releases) から最新の `kintone-word-collector.zip` をダウンロード
 2. Kintone管理画面でプラグインをアップロード
 3. アプリにプラグインを追加
 4. プラグイン設定でチェック対象フィールドを選択
