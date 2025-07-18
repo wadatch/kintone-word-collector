@@ -1,6 +1,6 @@
 # Kintone Word Collector (文言チェッカー)
 
-[![Build Status](https://github.com/wadatch/kintone-word-collector/actions/workflows/build-plugin.yml/badge.svg)](https://github.com/wadatch/kintone-word-collector/actions/workflows/build-plugin.yml)
+[![Build Status](https://github.com/wadatch/kintone-word-collector/actions/workflows/build.yml/badge.svg)](https://github.com/wadatch/kintone-word-collector/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 日本語文章の表記ゆれや不適切な表現をチェック・修正提案するKintoneプラグインです。
