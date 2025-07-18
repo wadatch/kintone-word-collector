@@ -184,6 +184,7 @@ select#select-fields {
 }
 
 .word-collector-button-replace,
+.word-collector-button-proceed,
 .word-collector-button-cancel {
   padding: 10px 30px;
   font-size: 16px;
@@ -200,6 +201,15 @@ select#select-fields {
 
 .word-collector-button-replace:hover {
   background-color: #0056b3;
+}
+
+.word-collector-button-proceed {
+  background-color: #28a745;
+  color: white;
+}
+
+.word-collector-button-proceed:hover {
+  background-color: #218838;
 }
 
 .word-collector-button-cancel {

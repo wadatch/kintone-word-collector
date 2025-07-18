@@ -177,14 +177,22 @@ jQuery.noConflict();
         resolve(true);
       });
       
-      const $cancelButton = $('<button class="word-collector-button-cancel">そのまま</button>');
-      $cancelButton.on('click', function() {
+      const $proceedButton = $('<button class="word-collector-button-proceed">そのまま</button>');
+      $proceedButton.on('click', function() {
         $dialog.remove();
         $overlay.remove();
         resolve(false);
       });
       
+      const $cancelButton = $('<button class="word-collector-button-cancel">キャンセル</button>');
+      $cancelButton.on('click', function() {
+        $dialog.remove();
+        $overlay.remove();
+        resolve('cancel');
+      });
+      
       $buttons.append($replaceButton);
+      $buttons.append($proceedButton);
       $buttons.append($cancelButton);
       $dialogContent.append($buttons);
       
@@ -322,8 +330,12 @@ jQuery.noConflict();
         
         // ファイルダイアログの後、テキストの問題がある場合は置換ダイアログを表示
         if (hasIssues) {
-          return showReplaceDialog(issuesByField).then(function(shouldReplace) {
-            if (shouldReplace) {
+          return showReplaceDialog(issuesByField).then(function(result) {
+            if (result === 'cancel') {
+              // キャンセルされた場合は保存を中止
+              return Promise.reject(new Error('保存がキャンセルされました'));
+            }
+            if (result === true) {
               Object.keys(issuesByField).forEach(function(fieldCode) {
                 const fieldInfo = issuesByField[fieldCode];
                 const replacedText = replaceWords(fieldInfo.value, fieldInfo.issues);
@@ -339,8 +351,12 @@ jQuery.noConflict();
     
     // テキストの問題のみある場合
     if (hasIssues) {
-      return showReplaceDialog(issuesByField).then(function(shouldReplace) {
-        if (shouldReplace) {
+      return showReplaceDialog(issuesByField).then(function(result) {
+        if (result === 'cancel') {
+          // キャンセルされた場合は保存を中止
+          return Promise.reject(new Error('保存がキャンセルされました'));
+        }
+        if (result === true) {
           Object.keys(issuesByField).forEach(function(fieldCode) {
             const fieldInfo = issuesByField[fieldCode];
             const replacedText = replaceWords(fieldInfo.value, fieldInfo.issues);
