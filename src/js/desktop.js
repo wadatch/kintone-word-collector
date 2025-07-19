@@ -116,7 +116,8 @@ jQuery.noConflict();
     const fieldPromises = targetFields.map(function(fieldCode) {
       if (record[fieldCode] && record[fieldCode].value) {
         const fieldValue = record[fieldCode].value;
-        const fieldLabel = kintone.app.getFieldElements(fieldCode)[0]?.innerText || fieldCode;
+        const fieldElements = kintone.app.getFieldElements(fieldCode);
+        const fieldLabel = (fieldElements && fieldElements[0]) ? fieldElements[0].innerText : fieldCode;
         
         // ファイルフィールドの場合
         if (Array.isArray(fieldValue)) {
