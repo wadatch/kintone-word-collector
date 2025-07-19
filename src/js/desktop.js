@@ -35,41 +35,41 @@ jQuery.noConflict();
       if (FileProcessor.isSupported(file.contentType)) {
         return FileProcessor.extractText(file).then(function(result) {
           const fileTypeName = FileProcessor.getFileTypeName(file.contentType);
-          const $fileInfo = $('<div class="word-collector-file-info"></div>');
+          const $fileInfo = $('<div class="word-corrector-file-info"></div>');
           
           if (result.isText) {
             // テキストファイルの場合は実際にチェック
             const issues = checkWords(result.text);
             if (issues.length > 0) {
               $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + ' (' + fileTypeName + ')' +
-                            '<br><span class="word-collector-file-note">' + issues.length + '件の表記修正候補が見つかりました。</span>');
+                            '<br><span class="word-corrector-file-note">' + issues.length + '件の表記修正候補が見つかりました。</span>');
               
               // 問題のある箇所をリスト表示
-              const $issuesList = $('<ul class="word-collector-list"></ul>');
+              const $issuesList = $('<ul class="word-corrector-list"></ul>');
               issues.forEach(function(issue) {
                 const $item = $('<li></li>');
-                $item.html('"<span class="word-collector-incorrect">' + issue.word + 
-                          '</span>" → "<span class="word-collector-suggestion">' + 
+                $item.html('"<span class="word-corrector-incorrect">' + issue.word + 
+                          '</span>" → "<span class="word-corrector-suggestion">' + 
                           issue.suggestion + '</span>"');
                 $issuesList.append($item);
               });
               $fileInfo.append($issuesList);
             } else {
               $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + ' (' + fileTypeName + ')' +
-                            '<br><span class="word-collector-file-note">問題は見つかりませんでした。</span>');
+                            '<br><span class="word-corrector-file-note">問題は見つかりませんでした。</span>');
             }
           } else {
             // PDF/DOCXの場合は情報表示のみ
             $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + ' (' + fileTypeName + ')' +
-                          '<br><span class="word-collector-file-note">このファイル形式は内容確認が必要です。必要に応じて修正・再アップロードしてください。</span>');
+                          '<br><span class="word-corrector-file-note">このファイル形式は内容確認が必要です。必要に応じて修正・再アップロードしてください。</span>');
           }
           
           $resultsContainer.append($fileInfo);
           return result;
         }).catch(function(error) {
-          const $fileInfo = $('<div class="word-collector-file-info"></div>');
+          const $fileInfo = $('<div class="word-corrector-file-info"></div>');
           $fileInfo.html('<strong>' + fieldLabel + '</strong>: ' + file.name + 
-                        '<br><span class="word-collector-file-note">ファイルの読み取りに失敗しました: ' + error.message + '</span>');
+                        '<br><span class="word-corrector-file-note">ファイルの読み取りに失敗しました: ' + error.message + '</span>');
           $resultsContainer.append($fileInfo);
           return null;
         });
@@ -82,18 +82,18 @@ jQuery.noConflict();
   }
 
   function createIssueElement(fieldLabel, issues) {
-    const $container = $('<div class="word-collector-issues"></div>');
+    const $container = $('<div class="word-corrector-issues"></div>');
     
     if (issues.length > 0) {
-      const $header = $('<div class="word-collector-header"></div>');
+      const $header = $('<div class="word-corrector-header"></div>');
       $header.html('<strong>' + fieldLabel + '</strong> に表記の問題が見つかりました:');
       $container.append($header);
       
-      const $list = $('<ul class="word-collector-list"></ul>');
+      const $list = $('<ul class="word-corrector-list"></ul>');
       issues.forEach(function(issue) {
         const $item = $('<li></li>');
-        $item.html('"<span class="word-collector-incorrect">' + issue.word + 
-                  '</span>" → "<span class="word-collector-suggestion">' + 
+        $item.html('"<span class="word-corrector-incorrect">' + issue.word + 
+                  '</span>" → "<span class="word-corrector-suggestion">' + 
                   issue.suggestion + '</span>"');
         $list.append($item);
       });
@@ -110,13 +110,14 @@ jQuery.noConflict();
     }
     
     const targetFields = JSON.parse(CONFIG.fields);
-    const $resultsContainer = $('<div id="word-collector-results"></div>');
+    const $resultsContainer = $('<div id="word-corrector-results"></div>');
     let totalIssues = 0;
     
     const fieldPromises = targetFields.map(function(fieldCode) {
       if (record[fieldCode] && record[fieldCode].value) {
         const fieldValue = record[fieldCode].value;
-        const fieldLabel = kintone.app.getFieldElements(fieldCode)[0]?.innerText || fieldCode;
+        const fieldElements = kintone.app.getFieldElements(fieldCode);
+        const fieldLabel = (fieldElements && fieldElements[0]) ? fieldElements[0].innerText : fieldCode;
         
         // ファイルフィールドの場合
         if (Array.isArray(fieldValue)) {
@@ -135,7 +136,7 @@ jQuery.noConflict();
     });
     
     Promise.all(fieldPromises).then(function() {
-      const existingResults = document.getElementById('word-collector-results');
+      const existingResults = document.getElementById('word-corrector-results');
       if (existingResults) {
         existingResults.remove();
       }
@@ -170,10 +171,10 @@ jQuery.noConflict();
 
   function showReplaceDialog(issuesByField) {
     return new Promise(function(resolve) {
-      const $dialog = $('<div class="word-collector-dialog"></div>');
-      const $overlay = $('<div class="word-collector-overlay"></div>');
+      const $dialog = $('<div class="word-corrector-dialog"></div>');
+      const $overlay = $('<div class="word-corrector-overlay"></div>');
       
-      const $dialogContent = $('<div class="word-collector-dialog-content"></div>');
+      const $dialogContent = $('<div class="word-corrector-dialog-content"></div>');
       $dialogContent.append('<h2>誤表記が見つかりました</h2>');
       
       let totalIssues = 0;
@@ -185,14 +186,14 @@ jQuery.noConflict();
       
       Object.keys(issuesByField).forEach(function(fieldCode) {
         const fieldInfo = issuesByField[fieldCode];
-        const $fieldSection = $('<div class="word-collector-field-section"></div>');
+        const $fieldSection = $('<div class="word-corrector-field-section"></div>');
         $fieldSection.append('<h3>' + fieldInfo.label + '</h3>');
         
-        const $issuesList = $('<ul class="word-collector-dialog-list"></ul>');
+        const $issuesList = $('<ul class="word-corrector-dialog-list"></ul>');
         fieldInfo.issues.forEach(function(issue) {
           const $item = $('<li></li>');
-          $item.html('"<span class="word-collector-incorrect">' + issue.word + 
-                    '</span>" → "<span class="word-collector-suggestion">' + 
+          $item.html('"<span class="word-corrector-incorrect">' + issue.word + 
+                    '</span>" → "<span class="word-corrector-suggestion">' + 
                     issue.suggestion + '</span>"');
           $issuesList.append($item);
         });
@@ -201,23 +202,23 @@ jQuery.noConflict();
         $dialogContent.append($fieldSection);
       });
       
-      const $buttons = $('<div class="word-collector-dialog-buttons"></div>');
+      const $buttons = $('<div class="word-corrector-dialog-buttons"></div>');
       
-      const $replaceButton = $('<button class="word-collector-button-replace">置換</button>');
+      const $replaceButton = $('<button class="word-corrector-button-replace">置換</button>');
       $replaceButton.on('click', function() {
         $dialog.remove();
         $overlay.remove();
         resolve(true);
       });
       
-      const $proceedButton = $('<button class="word-collector-button-proceed">そのまま</button>');
+      const $proceedButton = $('<button class="word-corrector-button-proceed">そのまま</button>');
       $proceedButton.on('click', function() {
         $dialog.remove();
         $overlay.remove();
         resolve(false);
       });
       
-      const $cancelButton = $('<button class="word-collector-button-cancel">キャンセル</button>');
+      const $cancelButton = $('<button class="word-corrector-button-cancel">キャンセル</button>');
       $cancelButton.on('click', function() {
         $dialog.remove();
         $overlay.remove();
@@ -237,25 +238,25 @@ jQuery.noConflict();
 
   function showFileDialog(filesByField) {
     return new Promise(function(resolve) {
-      const $dialog = $('<div class="word-collector-dialog"></div>');
-      const $overlay = $('<div class="word-collector-overlay"></div>');
+      const $dialog = $('<div class="word-corrector-dialog"></div>');
+      const $overlay = $('<div class="word-corrector-overlay"></div>');
       
-      const $dialogContent = $('<div class="word-collector-dialog-content"></div>');
+      const $dialogContent = $('<div class="word-corrector-dialog-content"></div>');
       $dialogContent.append('<h2>ファイルが検出されました</h2>');
       
       $dialogContent.append('<p>以下のファイルが見つかりました。内容を確認し、必要に応じて修正・再アップロードしてください。</p>');
       
       Object.keys(filesByField).forEach(function(fieldCode) {
         const fieldInfo = filesByField[fieldCode];
-        const $fieldSection = $('<div class="word-collector-field-section"></div>');
+        const $fieldSection = $('<div class="word-corrector-field-section"></div>');
         $fieldSection.append('<h3>' + fieldInfo.label + '</h3>');
         
-        const $filesList = $('<ul class="word-collector-dialog-list"></ul>');
+        const $filesList = $('<ul class="word-corrector-dialog-list"></ul>');
         fieldInfo.files.forEach(function(file) {
           const $item = $('<li></li>');
           const fileTypeName = FileProcessor.getFileTypeName(file.contentType);
           $item.html('<strong>' + file.name + '</strong> (' + fileTypeName + ')' +
-                    '<br><span class="word-collector-file-note">このファイル形式は内容確認が必要です。</span>');
+                    '<br><span class="word-corrector-file-note">このファイル形式は内容確認が必要です。</span>');
           $filesList.append($item);
         });
         
@@ -263,16 +264,16 @@ jQuery.noConflict();
         $dialogContent.append($fieldSection);
       });
       
-      const $buttons = $('<div class="word-collector-dialog-buttons"></div>');
+      const $buttons = $('<div class="word-corrector-dialog-buttons"></div>');
       
-      const $okButton = $('<button class="word-collector-button-ok">OK</button>');
+      const $okButton = $('<button class="word-corrector-button-ok">OK</button>');
       $okButton.on('click', function() {
         $dialog.remove();
         $overlay.remove();
         resolve(true);
       });
       
-      const $cancelButton = $('<button class="word-collector-button-cancel">キャンセル</button>');
+      const $cancelButton = $('<button class="word-corrector-button-cancel">キャンセル</button>');
       $cancelButton.on('click', function() {
         $dialog.remove();
         $overlay.remove();
