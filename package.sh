@@ -2,7 +2,7 @@
 
 # Kintone plugin packaging script
 
-PLUGIN_NAME="word-collector"
+PLUGIN_NAME="word-corrector"
 PLUGIN_DIR="${PLUGIN_NAME}"
 SOURCE_DIR="src"
 

@@ -1,6 +1,6 @@
-# Kintone Word Collector (文言チェッカー)
+# Kintone Word Corrector (文言チェッカー)
 
-[![Build Status](https://github.com/wadatch/kintone-word-collector/actions/workflows/build.yml/badge.svg)](https://github.com/wadatch/kintone-word-collector/actions/workflows/build.yml)
+[![Build Status](https://github.com/wadatch/kintone-word-corrector/actions/workflows/build.yml/badge.svg)](https://github.com/wadatch/kintone-word-corrector/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 日本語文章の表記ゆれや不適切な表現をチェック・修正提案するKintoneプラグインです。
@@ -14,7 +14,7 @@
 
 ## インストール方法
 
-1. [Releases](https://github.com/wadatch/kintone-word-collector/releases) から最新の `kintone-word-collector.zip` をダウンロード
+1. [Releases](https://github.com/wadatch/kintone-word-corrector/releases) から最新の `plugin.zip` をダウンロード
 2. Kintone管理画面でプラグインをアップロード
 3. アプリにプラグインを追加
 4. プラグイン設定でチェック対象フィールドを選択
@@ -29,8 +29,8 @@
 ### セットアップ
 
 ```bash
-git clone https://github.com/wadatch/kintone-word-collector.git
-cd kintone-word-collector
+git clone https://github.com/wadatch/kintone-word-corrector.git
+cd kintone-word-corrector
 npm install
 ```
 

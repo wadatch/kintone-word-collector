@@ -26,15 +26,15 @@
   },
   "name": {
     "ja": "文言チェッカー",
-    "en": "Word Collector"
+    "en": "Word Corrector"
   },
   "description": {
     "ja": "指定したフィールドの日本語文章をチェックし、不適切な表現や表記ゆれを検出・修正提案します",
     "en": "Checks Japanese text in specified fields and suggests corrections for inappropriate expressions"
   },
   "homepage_url": {
-    "ja": "https://github.com/wadatch/kintone-word-collector",
-    "en": "https://github.com/wadatch/kintone-word-collector"
+    "ja": "https://github.com/wadatch/kintone-word-corrector",
+    "en": "https://github.com/wadatch/kintone-word-corrector"
   },
   "icon": "image/icon.png"
 }

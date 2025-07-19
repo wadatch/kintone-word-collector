@@ -1,5 +1,5 @@
 {
-  "name": "word-collector",
+  "name": "word-corrector",
   "version": "1.0.0",
   "description": "Kintone plugin to check and suggest corrections for Japanese text",
   "scripts": {
